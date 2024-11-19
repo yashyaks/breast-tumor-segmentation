@@ -7,4 +7,4 @@ Flask app for Breast Tumor Segmentation using FPNet, other models as evaluated f
 ![Results Table](results-table.jpeg)
 
 ### Results Plot
-![Results Plot](plot.png)
+![Results Plot](plot.jpeg)

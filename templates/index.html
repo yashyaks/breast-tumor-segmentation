@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Segmentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            min-height: 300px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .choose-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .try-again-btn {
+            background-color: #2196F3;
+            color: white;
+            display: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .choose-btn:hover {
+            background-color: #45a049;
+        }
+
+        .try-again-btn:hover {
+            background-color: #1976D2;
+        }
+
+        .results {
+            display: none;  /* Initially hidden */
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-box {
+            text-align: center;
+            flex: 0 1 600px;
+        }
+
+        .result-image {
+            width: 600px;
+            height: 600px;
+            object-fit: contain;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-top: 15px;
+            background-color: #f8f8f8;
+            transition: transform 0.3s ease;
+        }
+
+        .result-image:hover {
+            transform: scale(1.02);
+        }
+
+        h3 {
+            color: #444;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .loading:after {
+            content: "...";
+            animation: dots 1s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: "."; }
+            40% { content: ".."; }
+            60% { content: "..."; }
+            80% { content: "...."; }
+            100% { content: "....."; }
+        }
+
+        .initial-message {
+            text-align: center;
+            color: #666;
+            margin: 50px 0;
+            font-size: 18px;
+        }
+
+        /* Added responsive design for smaller screens */
+        @media (max-width: 1300px) {
+            .result-box {
+                flex: 0 1 500px;
+            }
+            .result-image {
+                width: 500px;
+                height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .result-box {
+                flex: 0 1 400px;
+            }
+            .result-image {
+                width: 400px;
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .result-box {
+                flex: 0 1 300px;
+            }
+            .result-image {
+                width: 300px;
+                height: 300px;
+            }
+            .btn {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Segmentation</h1>
+        
+        <div class="upload-section">
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
+            <button id="chooseBtn" class="btn choose-btn" onclick="document.getElementById('fileInput').click()">
+                Choose Image
+            </button>
+            <button id="tryAgainBtn" class="btn try-again-btn" onclick="resetUpload()">
+                Try Another Image
+            </button>
+        </div>
+
+        <div id="initialMessage" class="initial-message">
+            Please choose an image to start the segmentation process
+        </div>
+
+        <div id="loading" class="loading">Processing</div>
+
+        <div id="results" class="results">
+            <div class="result-box">
+                <h3>Original Image</h3>
+                <img id="originalImage" class="result-image">
+            </div>
+            <div class="result-box">
+                <h3>Segmentation Mask</h3>
+                <img id="maskImage" class="result-image">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function resetUpload() {
+            // Clear the file input
+            document.getElementById('fileInput').value = '';
+            
+            // Hide results and show initial message
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('initialMessage').style.display = 'block';
+            
+            // Show choose button and hide try again button
+            document.getElementById('chooseBtn').style.display = 'inline-block';
+            document.getElementById('tryAgainBtn').style.display = 'none';
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Show loading indicator and hide other elements
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('chooseBtn').style.display = 'none';
+                document.getElementById('initialMessage').style.display = 'none';
+                document.getElementById('results').style.display = 'none';
+
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    document.getElementById('loading').style.display = 'none';
+
+                    if (data.error) {
+                        alert(data.error);
+                        // Show choose button and initial message again if there's an error
+                        document.getElementById('chooseBtn').style.display = 'inline-block';
+                        document.getElementById('initialMessage').style.display = 'block';
+                        return;
+                    }
+
+                    // Display results
+                    document.getElementById('originalImage').src = data.original;
+                    document.getElementById('maskImage').src = data.prediction;
+                    document.getElementById('results').style.display = 'flex';
+                    
+                    // Show try again button
+                    document.getElementById('tryAgainBtn').style.display = 'inline-block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('chooseBtn').style.display = 'inline-block';
+                    document.getElementById('initialMessage').style.display = 'block';
+                    alert('An error occurred while processing the image.');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

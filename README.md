@@ -6,4 +6,4 @@
 ![Results Table](results-table.jpeg)
 
 ### Image 2
-![Results Plot](plot.png)
+![Results Plot](plot.jpeg)
